@@ -4,7 +4,7 @@ const briefSchema = new mongoose.Schema({
   advertiserId: { type: mongoose.Schema.Types.ObjectId, ref: "Advertiser", required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  categories: [String], 
+  categories: [String],
   phrases: [String],
   waitingForBrand: { type: Boolean, default: false },
   waitingForInfluencer: { type: Boolean, default: true },
@@ -16,14 +16,27 @@ const briefSchema = new mongoose.Schema({
   numberOfRevisions: { type: Number, default: 1 },
   budget: { type: Number, required: true },
   targetPlatform: { type: String, enum: ["Instagram", "TikTok"], required: true },
-  attachment: { type: String }, 
+  attachment: {
+    type: Object,
+    default: {
+      url: "",
+      publicId: null,
+      resourceType: "image", // or "video"
+    },
+  },
   validationStatus: {
     type: String,
-    enum: ["pending", "accepted", "rejected"], 
+    enum: ["pending", "accepted", "rejected"],
     default: "pending",
   },
+  campaigns: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Campaign",  // Reference to the 'Campaign' model
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
+
 });
 
 module.exports = mongoose.model("Brief", briefSchema);
-

@@ -10,6 +10,7 @@ const {
     resetPassword
 } = require("../controllers/auth.controller.js");
 const  {verifyToken }= require("../middleware/verifyToken.js");
+const mediaUpload = require("../middleware/mediaUpload");
 
 const router = express.Router();
 

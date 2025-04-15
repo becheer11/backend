@@ -55,10 +55,10 @@ const verifyTokenAndCreator = (req, res, next) => {
 const verifyTokenAndAdvertiser = (req, res, next) => {
   verifyToken(req, res, async () => {
     try {
-      const advertiser = await Advertiser.findById(req.userId);
-      if (advertiser) {
+      const user = await User.findById(req.userId).select("roles");
+      if (user && (user.roles.includes("Brand") || user.roles.includes("Admin"))) { {
         next();
-      } else {
+      }} else {
         return res.status(403).json({ message: "Not allowed, only Advertisers or Admins." });
       }
     } catch (error) {
