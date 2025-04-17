@@ -89,18 +89,14 @@ const getCampaigns = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-/**
- * @desc Get a campaign by ID
- */
 const getCampaignById = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id)
-      .populate("briefId", "title")
+      .populate("briefId", "title")  // Populate brief title
       .populate({
-        path: "creatorId",
-        select: "userId socialLinks",
-        populate: { path: "userId", select: "username" }
+        path: "briefId.advertiserId",  // Populate advertiserId within briefId
+        select: "userId",  // Fetch only userId within advertiserId
+        populate: { path: "userId", select: "profilePhoto" }  // Populate profilePhoto from userId
       });
 
     if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
@@ -111,6 +107,7 @@ const getCampaignById = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /**
  * @desc Get all campaigns by Brief ID
