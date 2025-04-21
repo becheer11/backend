@@ -49,7 +49,7 @@ const GetUser = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-  const { username, firstName, lastName, description, tags, keywords, instagram, tiktok, instafollowers, tiktokfollowers, companyName, website, address, industry } = req.body;
+  const { username, firstName, lastName, description, tags, categories, instagram, tiktok, instafollowers, tiktokfollowers, companyName, website, address, industry } = req.body;
   const userId = req.userId;
 
   try {
@@ -67,7 +67,7 @@ const updateProfile = async (req, res) => {
     user.lastName = lastName || user.lastName;
     user.description = description || user.description;
     user.tags = tags || user.tags;
-    user.keywords = keywords || user.keywords;
+    user.categories = categories || user.categories;
 
     // Handle profile photo upload (Cloudinary integration)
     if (req.file) {

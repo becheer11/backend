@@ -32,21 +32,22 @@ const createBrief = async (req, res) => {
         resourceType: uploadedResult.resource_type,
       };
 
-      fs.unlinkSync(filePath);
+      fs.unlinkSync(filePath); // Clean up file after upload
     }
 
+    // Create new brief from the request body
     const newBrief = new Brief({
       advertiserId: advertiser._id,
       title: req.body.title,
       description: req.body.description,
-      categories: req.body.categories,
-      phrases: req.body.phrases,
+      categories: req.body.categories || [],  // Default to empty array if not provided
+      phrases: req.body.phrases || [],        // Default to empty array if not provided
       waitingForBrand: req.body.waitingForBrand ?? false,
       waitingForInfluencer: req.body.waitingForInfluencer ?? true,
       reviewDeadline: req.body.reviewDeadline,
       deadline: req.body.deadline,
-      commentList: req.body.commentList,
-      tags: req.body.tags,
+      commentList: req.body.commentList || [],
+      tags: req.body.tags || [],              // Default to empty array if not provided
       status: req.body.status ?? "no influencer assigned",
       numberOfRevisions: req.body.numberOfRevisions ?? 1,
       budget: req.body.budget,
@@ -55,7 +56,7 @@ const createBrief = async (req, res) => {
       validationStatus: req.body.validationStatus ?? "pending",
     });
 
-    await newBrief.save();
+    await newBrief.save(); // Save the new brief to the database
 
     res.status(201).json({ success: true, message: "Brief created successfully", brief: newBrief });
   } catch (error) {
@@ -63,6 +64,7 @@ const createBrief = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
 // The rest of your controller functions stay unchanged
 
 
@@ -92,7 +94,7 @@ const getBriefs = async (req, res) => {
     .populate("advertiserId", "companyName")  // Populate advertiserId to get companyName
     .populate({
       path: "advertiserId", // Populate userId inside advertiserId
-      select: " userId profilePhoto",
+      select: " userId companyName profilePhoto",
       populate: { path: "userId", select: "profilePhoto" }
       // Select profilePhoto field from User
     });
