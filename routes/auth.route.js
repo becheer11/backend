@@ -7,7 +7,8 @@ const {
     signupCreator,
     verifyEmail,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    checkAuth
 } = require("../controllers/auth.controller.js");
 const  {verifyToken }= require("../middleware/verifyToken.js");
 const mediaUpload = require("../middleware/mediaUpload");
@@ -15,9 +16,8 @@ const mediaUpload = require("../middleware/mediaUpload");
 const router = express.Router();
 
 // Vérification de l'authentification
-router.get("/check-auth", verifyToken, (req, res) => {
-    res.status(200).json({ success: true, user: req.user });
-});
+router.get("/check-auth", verifyToken, checkAuth);
+
 
 // Routes d'inscription
 router.post("/signup/admin", signupAdmin);

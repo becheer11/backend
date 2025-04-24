@@ -131,55 +131,51 @@ const signupCreator = async (req, res) => {
     }
 };
 
-
 const login = async (req, res) => {
     const { email, password } = req.body;
-
+  
     try {
-        if (!email || !password) {
-            throw new Error("Email and password are required");
-        }
-
-        // Find the user by email and include password + roles
-        const user = await User.findOne({ email }).select("email password roles username");
-
-        if (!user) {
-            return res.status(400).json({ success: false, message: "User not found" });
-        }
-
-        // Ensure that the user has a password field
-        if (!user.password) {
-            return res.status(400).json({ success: false, message: "Password not found for this user" });
-        }
-
-        // Compare the provided password with the hashed password in the database
-        const isMatch = await bcryptjs.compare(password, user.password);
-
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: "Invalid credentials" });
-        }
-
-        // Generate a token and set it in the cookie
-        generateTokenAndSetCookie(res, user._id);
-
-        // Ensure roles is always returned as an array of strings
-        const userPayload = {
-            ...user._doc,
-            password: undefined,
-              roles: Array.isArray(user.roles) ? user.roles : [user.roles],
-
-        };
-
-        res.status(200).json({
-            success: true,
-            message: "Login successful",
-            user: userPayload,
+      if (!email || !password) {
+        return res.status(400).json({ success: false, message: "Email and password are required" });
+      }
+  
+      const user = await User.findOne({ email }).select("email password roles username isVerified");
+  
+      if (!user) {
+        return res.status(404).json({ success: false, message: "No account found with this email." });
+      }
+  
+      const isMatch = await bcryptjs.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: "Incorrect password. Please try again." });
+      }
+  
+      if (!user.isVerified) {
+        return res.status(403).json({
+          success: false,
+          message: "Please verify your email before logging in. Check your inbox for the code.",
         });
+      }
+  
+      generateTokenAndSetCookie(res, user._id);
+  
+      const userPayload = {
+        ...user._doc,
+        password: undefined,
+        roles: Array.isArray(user.roles) ? user.roles : [user.roles],
+      };
+  
+      res.status(200).json({
+        success: true,
+        message: "Login successful",
+        user: userPayload,
+      });
     } catch (error) {
-        console.log("Error in login", error);
-        res.status(400).json({ success: false, message: error.message });
+      console.error("Login error:", error.message);
+      res.status(500).json({ success: false, message: "Server error. Please try again later." });
     }
-};
+  };
+  
 
 
 
@@ -190,24 +186,55 @@ const logout = async (req, res) => {
 
 const verifyEmail = async (req, res) => {
     const { code } = req.body;
+  
     try {
-        const user = await User.findOne({ verificationToken: code, verificationTokenExpiresAt: { $gt: Date.now() } });
-        if (!user) {
-            return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
-        }
-
-        user.isVerified = true;
-        user.verificationToken = undefined;
-        user.verificationTokenExpiresAt = undefined;
-        await user.save();
-
-        await sendWelcomeEmail(user.email, user.username);
-
-        res.status(200).json({ success: true, message: "Email verified successfully", user: { ...user._doc, password: undefined } });
+      if (!code) {
+        return res.status(400).json({
+          success: false,
+          message: "Verification code is required",
+        });
+      }
+  
+      // Find user with matching token that is still valid
+      const user = await User.findOne({
+        verificationToken: code,
+        verificationTokenExpiresAt: { $gt: Date.now() },
+      });
+  
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or expired verification code",
+        });
+      }
+  
+      // Mark user as verified
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      user.verificationTokenExpiresAt = undefined;
+  
+      await user.save();
+  
+      // Optional: send a welcome email
+     await sendWelcomeEmail(user.email, user.username)
+  
+      return res.status(200).json({
+        success: true,
+        message: "Email verified successfully",
+        user: {
+          ...user._doc,
+          password: undefined,
+        },
+      });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Server error" });
+      console.error("verifyEmail error:", error); // <- Logs full stack trace
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
     }
-}
+  };
+  
 
 const forgotPassword = async (req, res) => {
     const { email } = req.body;
@@ -256,7 +283,7 @@ const resetPassword = async (req, res) => {
         user.resetPasswordExpiresAt = undefined;
         await user.save();
 
-        await sendResetSuccessEmail(user.email);
+       await sendResetSuccessEmail(user.email);
 
         res.status(200).json({ success: true, message: "Password reset successful" });
     } catch (error) {
