@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema(
 		username: { type: String, required: true, trim: true },
         firstName: { type: String, trim: true },
         lastName: { type: String,trim: true },
+        instaUsername: { type: String, trim: true, lowercase: true }, // Instagram Username
+        tiktokUsername: { type: String, trim: true, lowercase: true }, // TikTok Username
         categories: [{ type: String, index: true }],
         tags: [{ type: String, index: true }],
         profilePhoto:  {

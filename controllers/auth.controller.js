@@ -36,9 +36,9 @@ const signupAdmin = async (req, res) => {
 };
 
 const signupAdvertiser = async (req, res) => {
-    const { email, password, username,companyName, website, address, industry } = req.body;
+    const { email, password, username,companyName, tiktokUsername,instaUsername, website, address, industry } = req.body;
     try {
-        if (!email || !password || !username ) {
+        if (!email || !password || !username ||!tiktokUsername||!instaUsername ) {
             throw new Error("All required fields must be filled");
         }
 
@@ -85,9 +85,9 @@ const signupAdvertiser = async (req, res) => {
 };
 
 const signupCreator = async (req, res) => {
-    const { email, password, username, instagram, tiktok, instafollowers, tiktokfollowers } = req.body;
+    const { email, password, username,instagram, tiktokUsername,instaUsername, tiktok, instafollowers, tiktokfollowers } = req.body;
     try {
-        if (!email || !password || !username) {
+        if (!email || !password || !username ||!tiktokUsername||!instaUsername) {
             throw new Error("All required fields must be filled");
         }
 
@@ -104,6 +104,8 @@ const signupCreator = async (req, res) => {
             password: hashedPassword,
             username,
             roles: "Influencer",
+            instaUsername,
+            tiktokUsername,
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
         });
