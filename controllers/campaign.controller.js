@@ -142,7 +142,7 @@ const getMyCampaigns = async (req, res) => {
     if (!creator) return res.status(404).json({ success: false, message: "Creator not found" });
 
     const campaigns = await Campaign.find({ creatorId: creator._id })
-    .populate("briefId", "title")  // Populate briefId with the title of the brief
+    .populate("briefId"," title deadline description budget categories tags ")  // Populate briefId with the title of the brief
     .populate({
       path: "creatorId",
       select: "userId socialLinks",

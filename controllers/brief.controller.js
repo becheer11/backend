@@ -32,22 +32,33 @@ const createBrief = async (req, res) => {
         resourceType: uploadedResult.resource_type,
       };
 
-      fs.unlinkSync(filePath); // Clean up file after upload
+      fs.unlinkSync(filePath);
     }
 
-    // Create new brief from the request body
+    // Properly parse array fields
+    const parseArrayField = (field) => {
+      if (!field) return [];
+      if (Array.isArray(field)) return field;
+      try {
+        return JSON.parse(field);
+      } catch (e) {
+        return Array.isArray(field) ? field : [field];
+      }
+    };
+
+    // Create new brief with properly parsed arrays
     const newBrief = new Brief({
       advertiserId: advertiser._id,
       title: req.body.title,
       description: req.body.description,
-      categories: req.body.categories || [],  // Default to empty array if not provided
-      phrases: req.body.phrases || [],        // Default to empty array if not provided
+      categories: parseArrayField(req.body.categories),
+      phrases: parseArrayField(req.body.phrases),
       waitingForBrand: req.body.waitingForBrand ?? false,
       waitingForInfluencer: req.body.waitingForInfluencer ?? true,
       reviewDeadline: req.body.reviewDeadline,
       deadline: req.body.deadline,
-      commentList: req.body.commentList || [],
-      tags: req.body.tags || [],              // Default to empty array if not provided
+      commentList: parseArrayField(req.body.commentList),
+      tags: parseArrayField(req.body.tags),
       status: req.body.status ?? "no influencer assigned",
       numberOfRevisions: req.body.numberOfRevisions ?? 1,
       budget: req.body.budget,
@@ -56,7 +67,7 @@ const createBrief = async (req, res) => {
       validationStatus: req.body.validationStatus ?? "pending",
     });
 
-    await newBrief.save(); // Save the new brief to the database
+    await newBrief.save();
 
     res.status(201).json({ success: true, message: "Brief created successfully", brief: newBrief });
   } catch (error) {
