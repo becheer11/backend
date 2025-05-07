@@ -151,12 +151,45 @@ const updateBrief = async (req, res) => {
 
     const updatedBrief = await Brief.findByIdAndUpdate(id, req.body, { new: true });
 
+    // Notification for brief validation status change
     if (validationStatus && validationStatus !== oldValidationStatus) {
-      await sendNotification(`Your brief validation status changed to: ${validationStatus}`, brief.advertiserId);
+      let message = "";
+      if (validationStatus === "accepted") {
+        message = `Your brief "${brief.title}" has been approved by admin`;
+      } else if (validationStatus === "rejected") {
+        message = `Your brief "${brief.title}" has been rejected by admin`;
+      }
+      
+      if (message) {
+        console.log("Sending validation status notification...");
+        await sendNotification(
+          message, 
+          brief.advertiserId,
+          `/brief/${brief._id}` // Link to brief page
+        );
+      }
     }
 
+    // Notification for brief status change
     if (status && status !== oldStatus) {
-      await sendNotification(`Your brief status changed to: ${status}`, brief.advertiserId);
+      let message = "";
+      
+      if (status === "in progress") {
+        const creator = await Creator.findById(req.userId).populate("userId");
+        message = `Creator @${creator.userId.username} has started working on your brief "${brief.title}"`;
+      } else if (status === "submitted") {
+        const creator = await Creator.findById(req.userId).populate("userId");
+        message = `Creator @${creator.userId.username} has submitted work for your brief "${brief.title}"`;
+      }
+      
+      if (message) {
+        console.log("Sending status change notification...");
+        await sendNotification(
+          message,
+          brief.advertiserId,
+          `/brief/${brief._id}` // Link to brief page
+        );
+      }
     }
 
     return res.status(200).json({
@@ -165,6 +198,7 @@ const updateBrief = async (req, res) => {
       brief: updatedBrief,
     });
   } catch (error) {
+    console.error("Error updating brief:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -178,6 +212,17 @@ const deleteBrief = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+// In brief.controller.js
+const getBriefsCount = async (req, res) => {
+  try {
+    const count = await Brief.countDocuments();
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// In campaign.controller.js
 
 module.exports = {
   createBrief,
@@ -186,4 +231,5 @@ module.exports = {
   getBriefsByAdvertiser,
   updateBrief,
   deleteBrief,
+  getBriefsCount,
 };

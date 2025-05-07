@@ -2,8 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const { createBrief, getBriefs, getBriefsByAdvertiser, getBriefById, updateBrief, deleteBrief } = require('../controllers/brief.controller');
-const  {verifyTokenAndAdvertiser, verifyToken, verifyTokenAndCreator} = require("../middleware/verifyToken.js");
+const { createBrief, getBriefs, getBriefsByAdvertiser, getBriefById, updateBrief, deleteBrief, getBriefsCount } = require('../controllers/brief.controller');
+const  {verifyTokenAndAdvertiser, verifyToken, verifyTokenAndCreator, verifyTokenAndAdmin} = require("../middleware/verifyToken.js");
 const mediaUpload = require("../middleware/mediaUpload");
 
 // POST with image/video attachment
@@ -17,9 +17,10 @@ router.get("/mybriefs", verifyTokenAndAdvertiser, getBriefsByAdvertiser);
 router.get('/brief/:id', getBriefById);
 
 // Route to update a brief
-router.put('/brief/:id',verifyToken, updateBrief);
+router.put('/brief/:id',verifyToken , updateBrief);
 
 // Route to delete a brief
 router.delete('/brief/:id', verifyTokenAndAdvertiser, deleteBrief);
 
+router.get("/briefs/count",verifyTokenAndAdmin,getBriefsCount),
 module.exports = router;

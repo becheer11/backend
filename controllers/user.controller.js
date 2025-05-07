@@ -126,4 +126,94 @@ const updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-module.exports = { GetUser,updateProfile };
+
+
+// In user.controller.js
+const getCreatorsCount = async (req, res) => {
+  try {
+    const count = await Creator.countDocuments();
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const getAdvertisersCount = async (req, res) => {
+  try {
+    const count = await Advertiser.countDocuments();
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+const getCreators = async (req, res) => {
+  try {
+    const creators = await Creator.find()
+      .populate("userId", "username email createdAt");
+    res.status(200).json({ success: true, creators });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+const verifyCreator = async (req, res) => {
+  try {
+    const creator = await Creator.findByIdAndUpdate(
+      req.params.id,
+      { isVerified: true },
+      { new: true }
+    );
+    res.status(200).json({ success: true, creator });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const suspendCreator = async (req, res) => {
+  try {
+    const creator = await Creator.findByIdAndUpdate(
+      req.params.id,
+      { isSuspended: req.body.isSuspended },
+      { new: true }
+    );
+    res.status(200).json({ success: true, creator });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+const getAdvertisers = async (req, res) => {
+  try {
+    const advertisers = await Advertiser.find()
+      .populate("userId", "username email createdAt");
+    res.status(200).json({ success: true, advertisers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const verifyAdvertiser = async (req, res) => {
+  try {
+    const advertiser = await Advertiser.findByIdAndUpdate(
+      req.params.id,
+      { isVerified: true },
+      { new: true }
+    );
+    res.status(200).json({ success: true, advertiser });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const suspendAdvertiser = async (req, res) => {
+  try {
+    const advertiser = await Advertiser.findByIdAndUpdate(
+      req.params.id,
+      { isSuspended: req.body.isSuspended },
+      { new: true }
+    );
+    res.status(200).json({ success: true, advertiser });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+module.exports = { GetUser,updateProfile,getCreatorsCount,getAdvertisersCount ,getCreators,getAdvertisers,suspendAdvertiser,verifyAdvertiser,verifyCreator,suspendCreator };

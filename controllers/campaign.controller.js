@@ -2,10 +2,13 @@ const fs = require("fs");
 const Campaign = require("../models/campaign.model.js");
 const Brief = require("../models/brief.model.js");
 const Creator = require("../models/creator.model.js");
+const { sendNotification } = require("./notification.controller.js");
+
 const {
   cloudinaryUploadFile,
   cloudinaryRemoveImage
 } = require("../utils/cloudinary");
+
 
 
 const createCampaign = async (req, res) => {
@@ -76,7 +79,7 @@ const createCampaign = async (req, res) => {
 const getCampaigns = async (req, res) => {
   try {
     const campaigns = await Campaign.find()
-      .populate("briefId", "title")
+      .populate("briefId", "title deadline description budget categories tags")
       .populate({
         path: "creatorId",
         select: "userId socialLinks",
@@ -92,12 +95,13 @@ const getCampaigns = async (req, res) => {
 const getCampaignById = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id)
-      .populate("briefId", "title")  // Populate brief title
+    .populate("briefId", "title deadline description budget categories tags")
       .populate({
-        path: "briefId.advertiserId",  // Populate advertiserId within briefId
-        select: "userId",  // Fetch only userId within advertiserId
-        populate: { path: "userId", select: "profilePhoto" }  // Populate profilePhoto from userId
+        path: "creatorId",
+        select: "userId socialLinks",
+        populate: { path: "userId", select: "username" }
       });
+    
 
     if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
 
@@ -115,16 +119,16 @@ const getCampaignById = async (req, res) => {
 const getCampaignsByBriefId = async (req, res) => {
   try {
     const { briefId } = req.params;
-    const briefExists = await Brief.findById(briefId);
+    const briefExists = await Brief.findById(briefId)
+  
     if (!briefExists) return res.status(404).json({ success: false, message: "Brief not found" });
 
-    const campaigns = await Campaign.find({ briefId })
-      .populate("briefId", "title")
-      .populate({
-        path: "creatorId",
-        select: "userId socialLinks",
-        populate: { path: "userId", select: "username" }
-      });
+    const campaigns = await Campaign.find({ briefId }).populate({
+      path: "creatorId" ,
+      select: "userId socialLinks",
+      populate: { path: "userId", select: "username profilePhoto" }
+    });
+     
 
     res.status(200).json({ success: true, campaigns });
   } catch (error) {
@@ -144,7 +148,7 @@ const getMyCampaigns = async (req, res) => {
     const campaigns = await Campaign.find({ creatorId: creator._id })
     .populate("briefId"," title deadline description budget categories tags ")  // Populate briefId with the title of the brief
     .populate({
-      path: "creatorId",
+      path: "creatorId" ,
       select: "userId socialLinks",
       populate: { path: "userId", select: "username profilePhoto" }
     });
@@ -164,6 +168,11 @@ const updateCampaign = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
+
+    const brief = await Brief.findById(campaign.briefId);
+    const creator = await Creator.findById(campaign.creatorId).populate("userId");
+
+    const oldStatus = campaign.status;
 
     let updatedData = { ...req.body };
 
@@ -186,13 +195,40 @@ const updateCampaign = async (req, res) => {
 
     const updatedCampaign = await Campaign.findByIdAndUpdate(req.params.id, updatedData, { new: true });
 
+    // Notification for campaign status change
+    if (updatedData.status && updatedData.status !== oldStatus) {
+      let message = "";
+      let recipient = null;
+      
+      if (updatedData.status === "approved") {
+        message = `Admin has approved your campaign for brief "${brief.title}"`;
+        recipient = creator.userId._id;
+      } else if (updatedData.status === "rejected") {
+        message = `Admin has rejected your campaign for brief "${brief.title}"`;
+        recipient = creator.userId._id;
+      } else if (updatedData.status === "accepted") {
+        message = `Advertiser has accepted your campaign for brief "${brief.title}"`;
+        recipient = creator.userId._id;
+      } else if (updatedData.status === "declined") {
+        message = `Advertiser has declined your campaign for brief "${brief.title}"`;
+        recipient = creator.userId._id;
+      }
+      
+      if (message && recipient) {
+        await sendNotification(
+          message,
+          recipient,
+          `/campaign/${campaign._id}` // Link to campaign page
+        );
+      }
+    }
+
     res.status(200).json({ success: true, message: "Campaign updated", campaign: updatedCampaign });
   } catch (error) {
     console.error("Error updating campaign:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
 /**
  * @desc Delete a campaign
  */
@@ -211,6 +247,18 @@ const deleteCampaign = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+const getCampaignsCount = async (req, res) => {
+  try {
+    const count = await Campaign.countDocuments();
+    res.status(200).json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// In user.controller.js
+
+
 
 module.exports = {
   createCampaign,
@@ -219,5 +267,6 @@ module.exports = {
   getCampaignsByBriefId,
   getMyCampaigns,
   updateCampaign,
-  deleteCampaign
+  deleteCampaign,
+  getCampaignsCount,
 };

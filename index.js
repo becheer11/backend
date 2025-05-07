@@ -9,6 +9,7 @@ const authRoutes = require("./routes/auth.route.js");
 const userRoutes=require("./routes/user.route.js");
 const briefRoutes=require("./routes/brief.route.js");
 const campaignRoutes=require("./routes/campaign.route.js");
+const notificationRoutes= require("./routes/notification.route.js");
 dotenv.config();
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/", briefRoutes);
 app.use("/api/", campaignRoutes);
 app.use("/api/user",userRoutes);
+app.use("/api/notifications",notificationRoutes);
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "/frontend/dist")));

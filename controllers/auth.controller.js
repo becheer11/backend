@@ -7,9 +7,9 @@ const Advertiser = require("../models/advertiser.model.js");
 const Creator = require("../models/creator.model.js");
 
 const signupAdmin = async (req, res) => {
-    const { email, password, username, role } = req.body;
+    const { email, password, username, roles } = req.body;
     try {
-        if (!email || !password || !username || !role) {
+        if (!email || !password || !username || !roles) {
             throw new Error("All fields are required");
         }
 
@@ -19,7 +19,7 @@ const signupAdmin = async (req, res) => {
         }
 
         const hashedPassword = await bcryptjs.hash(password, 10);
-        const user = new User({ email, password: hashedPassword, username, role, isVerified: true });
+        const user = new User({ email, password: hashedPassword, username, roles, isVerified: true });
         await user.save();
 
         generateTokenAndSetCookie(res, user._id);
@@ -55,6 +55,8 @@ const signupAdvertiser = async (req, res) => {
             password: hashedPassword,
             username,
             roles: "Brand",
+            tiktokUsername,
+            instaUsername,
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
         });
